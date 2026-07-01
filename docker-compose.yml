@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  geoverify:
+    build: .
+    container_name: onedata-geoverify
+    restart: unless-stopped
+    ports:
+      # Map host port 8080 to container port 3000.
+      # You can change 8080 to any open port on your host server.
+      - "8080:3000"
+    volumes:
+      # Persists the visits database to the host's data folder
+      - ./data:/usr/src/app/data
+    env_file:
+      - .env
