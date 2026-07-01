@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoVerify Admin - Analytics & Logs Dashboard</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS for Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Global Stylesheet -->
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Admin Stylesheet -->
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <!-- Animated Background Glows -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- AUTHENTICATION OVERLAY -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-card animate-slide-up">
+      <div class="auth-logo" style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 8px;">
+        <img src="https://onedata.ng/front/images/logo3x.png" alt="OneData" style="height: 48px; width: auto;" loading="lazy">
+        <h2 style="font-size: 1.3rem;">GeoVerify Admin</h2>
+      </div>
+      <p>Please enter the administrator passcode to access analytics logs.</p>
+      <form id="login-form">
+        <div class="input-group">
+          <i data-lucide="lock" class="input-icon"></i>
+          <input type="password" id="admin-passcode" placeholder="Enter Admin Passcode" required autocomplete="current-password">
+        </div>
+        <div id="login-error" class="error-text hidden">Invalid passcode. Please try again.</div>
+        <button type="submit" class="btn-primary">
+          <span>Unlock Dashboard</span>
+          <i data-lucide="key-round"></i>
+        </button>
+      </form>
+      <div class="auth-footer">
+        <a href="/"><i data-lucide="arrow-left"></i> Return to Main Page</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD CONTAINER (Hidden initially) -->
+  <div id="dashboard" class="container hidden">
+    <!-- Header -->
+    <header class="admin-header">
+      <div class="admin-logo-wrapper" style="display: flex; align-items: center; gap: 16px;">
+        <img src="https://onedata.ng/front/images/logo3x.png" alt="OneData" style="height: 48px; width: auto;" loading="lazy">
+        <div>
+          <h2 style="font-size: 1.5rem; font-weight: 700;">Geo<span>Verify</span> Admin</h2>
+          <p class="admin-subtitle">Visitor Analytics & Geolocation Intelligence</p>
+        </div>
+      </div>
+      <div class="admin-controls">
+        <a href="/" class="btn-secondary" title="View Public Page">
+          <i data-lucide="external-link"></i>
+          <span>View Site</span>
+        </a>
+        <button id="logout-btn" class="btn-secondary" title="Sign Out">
+          <i data-lucide="log-out"></i>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- STATS ROW -->
+    <section class="stats-row">
+      <div class="stat-card animate-slide-up" style="animation-delay: 0.05s;">
+        <div class="stat-icon visits-icon"><i data-lucide="users"></i></div>
+        <div class="stat-data">
+          <span class="stat-value" id="stat-total-visits">0</span>
+          <span class="stat-label">Total Visits</span>
+        </div>
+      </div>
+      <div class="stat-card animate-slide-up" style="animation-delay: 0.1s;">
+        <div class="stat-icon unique-icon"><i data-lucide="fingerprint"></i></div>
+        <div class="stat-data">
+          <span class="stat-value" id="stat-unique-ips">0</span>
+          <span class="stat-label">Unique Visitors</span>
+        </div>
+      </div>
+      <div class="stat-card animate-slide-up" style="animation-delay: 0.15s;">
+        <div class="stat-icon countries-icon"><i data-lucide="globe-2"></i></div>
+        <div class="stat-data">
+          <span class="stat-value" id="stat-countries">0</span>
+          <span class="stat-label">Countries Detected</span>
+        </div>
+      </div>
+      <div class="stat-card animate-slide-up" style="animation-delay: 0.2s;">
+        <div class="stat-icon rate-icon"><i data-lucide="activity"></i></div>
+        <div class="stat-data">
+          <span class="stat-value" id="stat-active-rate">0</span>
+          <span class="stat-label">Visits / Day Avg</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAP & TIMELINE ROW -->
+    <section class="visuals-grid">
+      <!-- Visitor Distribution Map -->
+      <div class="admin-card map-span animate-slide-up" style="animation-delay: 0.25s;">
+        <div class="admin-card-header">
+          <div class="card-title-wrapper">
+            <i data-lucide="map-pinned"></i>
+            <h3>Visitor Distribution Map</h3>
+          </div>
+          <span class="badge" id="map-pin-count">0 Pins</span>
+        </div>
+        <div class="admin-card-body map-body">
+          <div id="admin-map" class="admin-map-container"></div>
+        </div>
+      </div>
+
+      <!-- Visits Over Time Chart -->
+      <div class="admin-card chart-span animate-slide-up" style="animation-delay: 0.3s;">
+        <div class="admin-card-header">
+          <div class="card-title-wrapper">
+            <i data-lucide="calendar"></i>
+            <h3>Visits Timeline</h3>
+          </div>
+        </div>
+        <div class="admin-card-body chart-body">
+          <canvas id="timeline-chart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- BREAKDOWN CHARTS ROW -->
+    <section class="breakdown-grid">
+      <!-- Top Countries -->
+      <div class="admin-card animate-slide-up" style="animation-delay: 0.35s;">
+        <div class="admin-card-header">
+          <div class="card-title-wrapper">
+            <i data-lucide="flag"></i>
+            <h3>Top Countries</h3>
+          </div>
+        </div>
+        <div class="admin-card-body pie-body">
+          <canvas id="countries-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Top Browsers -->
+      <div class="admin-card animate-slide-up" style="animation-delay: 0.4s;">
+        <div class="admin-card-header">
+          <div class="card-title-wrapper">
+            <i data-lucide="chrome"></i>
+            <h3>Top Browsers</h3>
+          </div>
+        </div>
+        <div class="admin-card-body pie-body">
+          <canvas id="browsers-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Top Operating Systems -->
+      <div class="admin-card animate-slide-up" style="animation-delay: 0.45s;">
+        <div class="admin-card-header">
+          <div class="card-title-wrapper">
+            <i data-lucide="monitor"></i>
+            <h3>Operating Systems</h3>
+          </div>
+        </div>
+        <div class="admin-card-body pie-body">
+          <canvas id="os-chart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOGS TABLE SECTION -->
+    <section class="admin-card logs-card animate-slide-up" style="animation-delay: 0.5s;">
+      <div class="admin-card-header table-actions-header">
+        <div class="card-title-wrapper">
+          <i data-lucide="database"></i>
+          <h3>Detailed Visit Logs</h3>
+        </div>
+        <div class="logs-actions">
+          <div class="search-box">
+            <i data-lucide="search"></i>
+            <input type="text" id="log-search" placeholder="Search IP, location, ISP...">
+          </div>
+          <select id="country-filter">
+            <option value="">All Countries</option>
+          </select>
+          <button id="export-csv-btn" class="btn-success" title="Download logs as CSV">
+            <i data-lucide="download"></i>
+            <span>Export CSV</span>
+          </button>
+          <button id="clear-logs-btn" class="btn-danger" title="Permanently delete all logs">
+            <i data-lucide="trash-2"></i>
+            <span>Clear Logs</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="admin-card-body table-responsive">
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>IP Address</th>
+              <th>Location</th>
+              <th>ISP / Provider</th>
+              <th>Browser / OS</th>
+              <th>Device</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="logs-table-body">
+            <!-- Dynamically populated -->
+            <tr>
+              <td colspan="7" class="loading-td">Fetching records...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAGINATION -->
+      <div class="pagination-footer">
+        <span class="pagination-info" id="pagination-info">Showing 0-0 of 0 logs</span>
+        <div class="pagination-controls">
+          <button id="prev-page-btn" disabled><i data-lucide="chevron-left"></i> Previous</button>
+          <span class="page-num" id="current-page-num">1</span>
+          <button id="next-page-btn" disabled>Next <i data-lucide="chevron-right"></i></button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Leaflet JS for Map -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Chart.js for Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Admin Script Logic -->
+  <script src="/js/admin.js"></script>
+</body>
+</html>
